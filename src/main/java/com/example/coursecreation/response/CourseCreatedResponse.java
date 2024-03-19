@@ -1,4 +1,4 @@
-package com.example.coursecreation.dto;
+package com.example.coursecreation.response;
 
 
 import com.example.coursecreation.Enums.CourseLevel;
@@ -6,10 +6,9 @@ import com.example.coursecreation.Enums.CourseStatus;
 import com.example.coursecreation.Enums.Language;
 import lombok.Data;
 
-import java.time.LocalDate;
-
 @Data
-public class CourseDto {
+public class CourseCreatedResponse {
+    private Long id;
 
     private String image;
 
@@ -19,16 +18,12 @@ public class CourseDto {
 
     private String requirements;
 
-    private Language language;
-
     private Enum<Language> languageEnum;
 
     private Enum<CourseLevel> courseLevelEnum;
 
-    private LocalDate date;
+    private Enum<CourseStatus> courseStatusEnum;
 
-    private Long skillId;
-
-    private Long categoryId;
+    private String SkillName;
 
 }

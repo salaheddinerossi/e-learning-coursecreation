@@ -1,83 +1,83 @@
 package com.example.coursecreation.serviceImpl;
 
 import com.example.coursecreation.dto.CategoryDto;
-import com.example.coursecreation.exception.CategoryNotFoundException;
-import com.example.coursecreation.exception.NoChildCategoriesException;
+import com.example.coursecreation.exception.BadRequestException;
+import com.example.coursecreation.exception.ResourceNotFoundException;
+import com.example.coursecreation.mapper.CategoryMapper;
 import com.example.coursecreation.model.Category;
 import com.example.coursecreation.repository.CategoryRepository;
+import com.example.coursecreation.response.CategoryNameResponse;
 import com.example.coursecreation.response.CategoryResponse;
 import com.example.coursecreation.service.CategoryService;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
-    final
-    CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+    @Autowired
+    public CategoryServiceImpl(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
         this.categoryRepository = categoryRepository;
+        this.categoryMapper = categoryMapper;
     }
 
     @Override
-    public void createCategory(CategoryDto categoryDto) {
-        Category category = new Category();
+    @Transactional
+    public CategoryResponse createCategory(CategoryDto categoryDto) {
+        Category category = categoryMapper.toCategory(categoryDto);
+        if(categoryDto.getParent_id() != null) {
+            category.setParentCategory(findCategoryById(categoryDto.getParent_id()));
+        }
 
-        category.setIcon(categoryDto.getIcon());
-        category.setTitle(categoryDto.getTitle());
-        category.setContainsCategories(categoryDto.getContainsCategories());
-        category.setParentCategory(findCategoryById(categoryDto.getParent_id()));
-
-        categoryRepository.save(category);
+        return categoryMapper.toCategoryResponse(categoryRepository.save(category));
     }
 
     @Override
-    public void modifyCategoryName(Long id,CategoryDto categoryDto) {
+    @Transactional
+    public CategoryResponse modifyCategoryName(Long id, CategoryDto categoryDto) {
         Category category = findCategoryById(id);
 
         category.setIcon(categoryDto.getIcon());
         category.setTitle(categoryDto.getTitle());
-        category.setParentCategory(findCategoryById(categoryDto.getParent_id()));
-
-        categoryRepository.save(category);
-
+        if(categoryDto.getParent_id() != null) {
+            category.setParentCategory(findCategoryById(categoryDto.getParent_id()));
+        }
+        return categoryMapper.toCategoryResponse(categoryRepository.save(category));
     }
 
     @Override
     public List<CategoryResponse> getCategoryByParentCategory(Long id) {
         Category category = findCategoryById(id);
-
-        if (!category.getContainsCategories()){
-            throw new NoChildCategoriesException();
+        if (!category.getContainsCategories()) {
+            throw new BadRequestException("this category has no sub categories");
         }
-
-        List<Category> categories = category.getChildCategories();
-        List<CategoryResponse> categoryResponses = new ArrayList<>();
-
-        for (Category ChildCategory:categories){
-            categoryResponses.add(setCategoryResponse(ChildCategory));
-        }
-
-        return categoryResponses;
+        return category.getChildCategories().stream()
+                .map(categoryMapper::toCategoryResponse)
+                .collect(Collectors.toList());
     }
 
-    public Category findCategoryById(Long id){
+    @Override
+    public List<CategoryNameResponse> getCategoriesByChildCategory(Long id) {
+        Category currentCategory = findCategoryById(id);
+        List<CategoryNameResponse> parentCategories = new ArrayList<>();
+        while (currentCategory.getParentCategory() != null) {
+            currentCategory = currentCategory.getParentCategory();
+            parentCategories.add(categoryMapper.toCategoryNameResponse(currentCategory));
+        }
+        return parentCategories;
+    }
+
+    private Category findCategoryById(Long id) {
         return categoryRepository.findById(id).orElseThrow(
-                CategoryNotFoundException::new
+                () -> new ResourceNotFoundException("Category not found with the id: " +id)
         );
     }
-
-    CategoryResponse setCategoryResponse(Category category){
-        CategoryResponse categoryResponse = new CategoryResponse();
-
-        categoryResponse.setId(category.getId());
-        categoryResponse.setIcon(category.getIcon());
-        categoryResponse.setTitle(category.getTitle());
-
-        return categoryResponse;
-    }
-
 }

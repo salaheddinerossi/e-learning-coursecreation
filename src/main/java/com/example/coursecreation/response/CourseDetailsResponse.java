@@ -6,6 +6,8 @@ import com.example.coursecreation.Enums.CourseStatus;
 import com.example.coursecreation.Enums.Language;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class CourseDetailsResponse {
     private Long id;
@@ -18,12 +20,15 @@ public class CourseDetailsResponse {
 
     private String requirements;
 
-    private Language language;
+    private Enum<Language> languageEnum;
 
-    private CourseLevel courseLevel;
+    private Enum<CourseLevel> courseLevelEnum;
 
-    private CourseStatus courseStatus;
+    private Enum<CourseStatus> courseStatusEnum;
 
+    private String SkillName;
+
+    private List<ChapterCourseResponse> chapterCourseResponses;
 
 
 }

@@ -6,6 +6,7 @@ import com.example.coursecreation.Enums.Language;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,11 +27,13 @@ public class Course {
 
     private String requirements;
 
-    private Language language;
+    private Enum<Language> languageEnum;
 
-    private CourseLevel courseLevel;
+    private Enum<CourseLevel> courseLevelEnum;
 
-    private CourseStatus courseStatus;
+    private Enum<CourseStatus> courseStatusEnum;
+
+    private LocalDate date;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -43,5 +46,8 @@ public class Course {
     @JoinColumn(name = "teacher_id")
     private Teacher teacher;
 
+    @ManyToOne
+    @JoinColumn(name = "skill_id")
+    private Skill skill;
 
 }

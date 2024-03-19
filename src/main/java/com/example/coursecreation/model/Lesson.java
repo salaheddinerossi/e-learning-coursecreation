@@ -17,6 +17,9 @@ public class Lesson {
 
     private String title;
 
+    private String description;
+
+
     private String material;
 
     @Convert(converter = StringListToJsonConverter.class)
@@ -25,6 +28,10 @@ public class Lesson {
     private String summary;
 
     private String transcribe;
+
+    private Boolean usesAI;
+
+
 
     @ManyToOne
     @JoinColumn(name = "chapter_id")
