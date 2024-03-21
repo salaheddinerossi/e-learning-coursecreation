@@ -1,13 +1,12 @@
 package com.example.coursecreation.service;
 
 import com.example.coursecreation.dto.LessonDto;
+import com.example.coursecreation.response.lessonResponse.LessonCreatedResponse;
 
 public interface LessonService {
 
     // create lesson
-    void createLesson(LessonDto lessonDto);
-
-    // push to ai
+    LessonCreatedResponse createLesson(LessonDto lessonDto);
 
     //modify lesson
 

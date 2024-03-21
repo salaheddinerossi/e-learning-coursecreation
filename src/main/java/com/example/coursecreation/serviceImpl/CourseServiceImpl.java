@@ -10,7 +10,6 @@ import com.example.coursecreation.repository.CategoryRepository;
 import com.example.coursecreation.repository.CourseRepository;
 import com.example.coursecreation.repository.SkillRepository;
 import com.example.coursecreation.repository.TeacherRepository;
-import com.example.coursecreation.response.ChapterCourseResponse;
 import com.example.coursecreation.response.CourseCreatedResponse;
 import com.example.coursecreation.response.CourseDetailsResponse;
 import com.example.coursecreation.response.CourseResponse;
@@ -52,7 +51,9 @@ public class CourseServiceImpl implements CourseService {
         Course course = courseMapper.toCourse(courseDto);
         course.setTeacher(findTeacherByEmail(email));
         course.setCategory(findCategoryById(courseDto.getCategoryId()));
-        course.setSkill(findSkillById(courseDto.getSkillId()));
+        if(courseDto.getSkillId()!=null){
+            course.setSkill(findSkillById(courseDto.getSkillId()));
+        }
         course.setCourseStatusEnum(CourseStatus.DRAFT);
         course.setDate(LocalDate.now());
 

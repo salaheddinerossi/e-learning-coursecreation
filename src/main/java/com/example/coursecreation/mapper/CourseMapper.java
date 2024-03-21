@@ -5,6 +5,7 @@ import com.example.coursecreation.model.Course;
 import com.example.coursecreation.model.Chapter;
 import com.example.coursecreation.model.Lesson;
 import com.example.coursecreation.response.*;
+import com.example.coursecreation.response.lessonResponse.LessonCourseResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

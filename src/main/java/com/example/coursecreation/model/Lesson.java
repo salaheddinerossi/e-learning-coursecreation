@@ -1,10 +1,12 @@
 package com.example.coursecreation.model;
 
 
+import com.example.coursecreation.model.Quizzes.Quiz;
 import com.example.coursecreation.util.StringListToJsonConverter;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -27,6 +29,7 @@ public class Lesson {
 
     private String summary;
 
+    @Lob
     private String transcribe;
 
     private Boolean usesAI;
@@ -36,5 +39,9 @@ public class Lesson {
     @ManyToOne
     @JoinColumn(name = "chapter_id")
     private Chapter chapter;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Quiz> quizzes = new ArrayList  <>();
+
 
 }

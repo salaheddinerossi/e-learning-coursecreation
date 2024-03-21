@@ -5,7 +5,9 @@ import com.example.coursecreation.dto.ChapterNameDto;
 import com.example.coursecreation.exception.ResourceNotFoundException;
 import com.example.coursecreation.mapper.ChapterMapper;
 import com.example.coursecreation.model.Chapter;
+import com.example.coursecreation.model.Course;
 import com.example.coursecreation.repository.ChapterRepository;
+import com.example.coursecreation.repository.CourseRepository;
 import com.example.coursecreation.response.ChapterResponse;
 import com.example.coursecreation.service.ChapterService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,15 +23,21 @@ public class ChapterServiceImpl implements ChapterService {
     private final ChapterRepository chapterRepository;
     private final ChapterMapper chapterMapper;
 
+    final
+    CourseRepository courseRepository;
+
     @Autowired
-    public ChapterServiceImpl(ChapterRepository chapterRepository, ChapterMapper chapterMapper) {
+    public ChapterServiceImpl(ChapterRepository chapterRepository, ChapterMapper chapterMapper, CourseRepository courseRepository) {
         this.chapterRepository = chapterRepository;
         this.chapterMapper = chapterMapper;
+        this.courseRepository = courseRepository;
     }
 
     @Override
     public ChapterResponse createChapter(ChapterDto chapterDto) {
         Chapter chapter = chapterMapper.toChapter(chapterDto);
+
+        chapter.setCourse(findCourseById(chapterDto.getCourse_id()));
 
         return chapterMapper.toChapterResponse(chapterRepository.save(chapter));
     }
@@ -64,6 +72,12 @@ public class ChapterServiceImpl implements ChapterService {
     private Chapter findChapterById(Long id) {
         return chapterRepository.findById(id).orElseThrow(
                 () -> new ResourceNotFoundException("chapter not found with the id:"+ id)
+        );
+    }
+
+    private Course findCourseById(Long id) {
+        return courseRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("course not found with the id:"+ id)
         );
     }
 }

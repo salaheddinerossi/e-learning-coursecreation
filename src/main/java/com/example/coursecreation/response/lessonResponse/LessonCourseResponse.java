@@ -1,4 +1,4 @@
-package com.example.coursecreation.response;
+package com.example.coursecreation.response.lessonResponse;
 
 import lombok.Data;
 

@@ -5,6 +5,8 @@ import lombok.Data;
 @Data
 public class ChapterDto {
 
+    private Long course_id;
+
     private String title;
 
     private Boolean containsChapters;

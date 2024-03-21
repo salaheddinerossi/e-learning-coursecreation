@@ -1,10 +1,12 @@
-package com.example.coursecreation.dto;
+package com.example.coursecreation.response.lessonResponse;
 
 
 import lombok.Data;
 
 @Data
-public class LessonDto {
+public class LessonCreatedResponse {
+
+    private Long id;
 
     private String title;
 
@@ -15,6 +17,5 @@ public class LessonDto {
     private Boolean usesAI;
 
     private Long chapterId;
-
 
 }

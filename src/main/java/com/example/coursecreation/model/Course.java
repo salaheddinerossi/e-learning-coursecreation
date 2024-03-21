@@ -27,9 +27,8 @@ public class Course {
 
     private String requirements;
 
-    private Enum<Language> languageEnum;
-
-    private Enum<CourseLevel> courseLevelEnum;
+    private Language languageEnum;
+    private CourseLevel courseLevelEnum;
 
     private Enum<CourseStatus> courseStatusEnum;
 
