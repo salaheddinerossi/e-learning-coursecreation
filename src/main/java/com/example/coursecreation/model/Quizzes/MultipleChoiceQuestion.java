@@ -1,5 +1,7 @@
 package com.example.coursecreation.model.Quizzes;
 
+import com.example.coursecreation.util.StringListToJsonConverter;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import lombok.Data;
@@ -11,7 +13,7 @@ import java.util.List;
 @Data
 @Entity
 public class MultipleChoiceQuestion extends Question {
-    @ElementCollection
+    @Convert(converter = StringListToJsonConverter.class)
     private List<String> options;
 
     private String correctAnswer;

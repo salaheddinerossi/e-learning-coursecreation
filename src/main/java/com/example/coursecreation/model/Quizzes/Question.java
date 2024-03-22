@@ -1,8 +1,12 @@
 package com.example.coursecreation.model.Quizzes;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Data
+@NoArgsConstructor
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Question {
     @Id

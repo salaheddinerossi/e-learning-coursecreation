@@ -4,6 +4,7 @@ import com.example.coursecreation.model.Lesson;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -22,4 +23,9 @@ public class Quiz {
     @ManyToOne
     @JoinColumn(name = "lesson_id")
     private Lesson lesson;
+
+    public Quiz() {
+        this.questions = new ArrayList<>();
+    }
+
 }
