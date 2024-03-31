@@ -24,6 +24,9 @@ public class Quiz {
     @JoinColumn(name = "lesson_id")
     private Lesson lesson;
 
+    @Column
+    private Boolean isDeleted= false;
+
     public Quiz() {
         this.questions = new ArrayList<>();
     }

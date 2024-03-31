@@ -104,9 +104,6 @@ public class CourseServiceImpl implements CourseService {
     }
 
 
-
-
-
     private Teacher findTeacherByEmail(String email){
         return teacherRepository.findByEmail(email).orElseThrow(
                 () -> new ResourceNotFoundException("Teacher not found with the email:"+ email)

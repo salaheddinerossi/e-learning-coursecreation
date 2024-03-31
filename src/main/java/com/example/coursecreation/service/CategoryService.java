@@ -16,5 +16,9 @@ public interface CategoryService {
 
     List<CategoryNameResponse> getCategoriesByChildCategory(Long id);
 
+    //get parent root categories
+
+
+
 
 }

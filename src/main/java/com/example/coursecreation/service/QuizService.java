@@ -22,6 +22,6 @@ public interface QuizService {
 
     List<TrueFalseResponse> modifyTrueFalseQuiz(Long quizId,QuizInstructions quizInstructions);
 
-
+    void deleteQuiz(Long id);
 
 }

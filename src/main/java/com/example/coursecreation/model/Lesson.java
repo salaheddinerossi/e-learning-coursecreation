@@ -34,6 +34,8 @@ public class Lesson {
 
     private Boolean usesAI;
 
+    @Column
+    private Boolean isDeleted=false;
 
 
     @ManyToOne

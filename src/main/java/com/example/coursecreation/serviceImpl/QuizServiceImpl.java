@@ -107,6 +107,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
+    @Transactional
     public List<TrueFalseResponse> modifyTrueFalseQuiz(Long quizId,QuizInstructions quizInstructions) {
         Quiz quiz1 = findQuizById(quizId);
         Lesson lesson =quiz1.getLesson();
@@ -121,6 +122,15 @@ public class QuizServiceImpl implements QuizService {
         quizRepository.save(quiz);
 
         return trueFalseResponses;
+    }
+
+    @Override
+    @Transactional
+    public void deleteQuiz(Long id) {
+        Quiz quiz =findQuizById(id);
+
+        quiz.setIsDeleted(true);
+        quizRepository.save(quiz);
     }
 
     private Quiz createMultipleChoiceQuiz(Long lessonID,List<MultipleChoiceResponse> multipleChoiceResponses){

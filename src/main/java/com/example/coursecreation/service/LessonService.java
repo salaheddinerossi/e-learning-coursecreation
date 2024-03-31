@@ -4,23 +4,19 @@ import com.example.coursecreation.dto.LessonDto;
 import com.example.coursecreation.dto.SummaryRequest;
 import com.example.coursecreation.response.JsonResponse.SummaryResponse;
 import com.example.coursecreation.response.lessonResponse.LessonCreatedResponse;
+import com.example.coursecreation.response.lessonResponse.LessonDetails;
 
 public interface LessonService {
 
-    // create lesson
     LessonCreatedResponse createLesson(LessonDto lessonDto);
 
     SummaryResponse addSummary(SummaryRequest summaryRequest, Long lessonId);
 
-    //modify lesson
+    LessonCreatedResponse modifyResponse(Long id,LessonDto lessonDto);
 
+    LessonDetails getLessonDetails(Long id);
 
-    //get lesson Details
-
-    //get lessons
-
-
-
+    void deleteLesson(Long id);
 
 
 }

@@ -1,15 +1,19 @@
 package com.example.coursecreation.controller;
 
-import com.example.coursecreation.dto.CourseCreationRequest;
 import com.example.coursecreation.dto.CourseDto;
+import com.example.coursecreation.exception.UnauthorizedException;
 import com.example.coursecreation.response.CourseCreatedResponse;
+import com.example.coursecreation.response.CourseDetailsResponse;
+import com.example.coursecreation.response.CourseResponse;
+import com.example.coursecreation.service.AuthService;
 import com.example.coursecreation.service.CourseService;
+import com.example.coursecreation.service.TeacherService;
 import com.example.coursecreation.util.ApiResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -20,16 +24,65 @@ public class CourseController {
     final
     CourseService courseService;
 
-    public CourseController(CourseService courseService) {
+    @Value("${auth.url}")
+    private String authUrl;
+
+    final
+    AuthService authService ;
+
+    final
+    TeacherService teacherService;
+
+
+    public CourseController(CourseService courseService, AuthService authService, TeacherService teacherService) {
         this.courseService = courseService;
+        this.authService = authService;
+        this.teacherService = teacherService;
     }
 
     @PostMapping("/")
-    public ResponseEntity<ApiResponse<CourseCreatedResponse>> createCourse(@RequestBody CourseCreationRequest courseCreationRequest){
+    public ResponseEntity<ApiResponse<CourseCreatedResponse>> createCourse(@RequestBody CourseDto courseDto , @RequestHeader("Authorization") String token){
 
-        CourseCreatedResponse courseCreatedResponse =  courseService.createCourse(courseCreationRequest.getCourseDto(), courseCreationRequest.getEmail());
+        String email  = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
+
+        CourseCreatedResponse courseCreatedResponse =  courseService.createCourse(courseDto, email);
         return ResponseEntity.ok(new ApiResponse<>(true, "Course has been created ",courseCreatedResponse));
 
+    }
+
+    @PutMapping("/{id}")
+    ResponseEntity<ApiResponse<CourseCreatedResponse>> modifyCourse(@PathVariable Long id,@RequestBody CourseDto courseDto, @RequestHeader("Authorization") String token){
+        String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
+        if (!teacherService.teacherHasCourse(id,email)){
+            throw new UnauthorizedException("you don't have the permission to modify this course");
+        }
+
+        CourseCreatedResponse courseCreatedResponse = courseService.modifyCourse(id,courseDto,email);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"course has been modified",courseCreatedResponse));
+    }
+
+    @GetMapping("/{id}")
+    ResponseEntity<ApiResponse<CourseDetailsResponse>> getCourseDetails(@PathVariable Long id){
+
+        CourseDetailsResponse courseDetailsResponse = courseService.getCourseDetails(id);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"Course fetched with success",courseDetailsResponse));
+    }
+
+    @PutMapping("/publish/{id}")
+    ResponseEntity<ApiResponse<?>> publishCourse(@PathVariable Long id,@RequestHeader("Authorization") String token){
+        String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
+        if (!teacherService.teacherHasCourse(id,email)){
+            throw new UnauthorizedException("you don't have the permission to modify this course");
+        }
+
+        courseService.publishCourse(id);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"course has been published",null));
+    }
+
+    @GetMapping("/categoryCourses/{id}")
+    ResponseEntity<ApiResponse<List<CourseResponse>>> getCoursesByCategory(@PathVariable Long id){
+        List<CourseResponse> courseResponses = courseService.getCoursesByCategory(id);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"data has been fetched successfully",courseResponses));
     }
 
 

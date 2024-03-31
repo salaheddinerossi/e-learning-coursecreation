@@ -6,17 +6,24 @@ import com.example.coursecreation.exception.ResourceNotFoundException;
 import com.example.coursecreation.mapper.LessonMapper;
 import com.example.coursecreation.model.Chapter;
 import com.example.coursecreation.model.Lesson;
+import com.example.coursecreation.model.Quizzes.*;
 import com.example.coursecreation.repository.ChapterRepository;
 import com.example.coursecreation.repository.CourseRepository;
 import com.example.coursecreation.repository.LessonRepository;
 import com.example.coursecreation.response.JsonResponse.DetailedTranscriptionResponse;
 import com.example.coursecreation.response.JsonResponse.SummaryResponse;
 import com.example.coursecreation.response.lessonResponse.LessonCreatedResponse;
+import com.example.coursecreation.response.lessonResponse.LessonDetails;
+import com.example.coursecreation.response.quizResponses.QuestionResponse;
+import com.example.coursecreation.response.quizResponses.QuizNoAnswerResponse;
 import com.example.coursecreation.service.AiService;
 import com.example.coursecreation.service.LessonService;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 
 @Service
@@ -73,6 +80,11 @@ public class LessonServiceImpl implements LessonService {
     public SummaryResponse addSummary(SummaryRequest summaryRequest, Long lessonId) {
         Lesson lesson = findLessonById(lessonId);
 
+        if (lesson.getIsDeleted()){
+            throw  new ResourceNotFoundException("this lesson has been deleted by the owner");
+        }
+
+
         summaryRequest.setTranscribtion(lesson.getTranscribe());
 
         if (summaryRequest.getSummary_type()==null){
@@ -93,6 +105,103 @@ public class LessonServiceImpl implements LessonService {
         return summaryResponse;
     }
 
+    @Override
+    public LessonCreatedResponse modifyResponse(Long id, LessonDto lessonDto) {
+
+
+        Lesson lesson = findLessonById(id);
+
+        if (lesson.getIsDeleted()){
+            throw  new ResourceNotFoundException("this lesson has been deleted by the owner");
+        }
+
+
+        lesson.setTitle(lesson.getTitle());
+        lesson.setDescription(lesson.getDescription());
+        if (!Objects.equals(lesson.getMaterial(), lessonDto.getMaterial()) && lessonDto.getUsesAI()){
+            lesson.setUsesAI(true);
+            DetailedTranscriptionResponse transcriptionResponse = aiService.getTranscribe(lessonDto.getMaterial()).block();
+            if(transcriptionResponse != null) {
+                lesson.setTranscribe(transcriptionResponse.getTranscription());
+                lesson.setSummary(transcriptionResponse.getSummary());
+                lesson.setAdvices(transcriptionResponse.getAdvice());
+            }
+        }
+        lesson.setMaterial(lesson.getMaterial());
+
+        for (Quiz quiz:lesson.getQuizzes()){
+            quiz.setIsDeleted(Boolean.TRUE);
+        }
+
+        return lessonMapper.lessonToLessonCreatedResponse(lessonRepository.save(lesson));
+    }
+
+    @Override
+    @Transactional
+    public LessonDetails getLessonDetails(Long id) {
+        Lesson lesson = findLessonById(id);
+        if (lesson.getIsDeleted()){
+            throw  new ResourceNotFoundException("this lesson has been deleted by the owner");
+        }
+        LessonDetails lessonDetails = lessonMapper.lessonToLessonDetails(lesson);
+
+
+        for (Quiz quiz:lesson.getQuizzes()){
+
+            if (quiz.getIsDeleted()){
+                continue;
+            }
+
+            QuizNoAnswerResponse quizNoAnswerResponse = new QuizNoAnswerResponse();
+
+            if (!quiz.getQuestions().isEmpty()) {
+                Object firstQuestion = quiz.getQuestions().get(0); // Get the first question
+
+                if (firstQuestion instanceof MultipleChoiceQuestion) {
+                    quizNoAnswerResponse.setType("MultipleChoiceQuestion");
+                } else if (firstQuestion instanceof TrueFalseQuestion) {
+                    quizNoAnswerResponse.setType("TrueFalseQuestion");
+                } else if (firstQuestion instanceof ExplanatoryQuestion) {
+                    quizNoAnswerResponse.setType("ExplanatoryQuestion");
+                }
+            }
+
+            List<QuestionResponse> questionResponses = new ArrayList<>();
+            for (Question question : quiz.getQuestions()){
+                QuestionResponse questionResponse = new QuestionResponse();
+                questionResponse.setQuestion(question.getPrompt());
+                questionResponse.setId(question.getId());
+                if (question instanceof MultipleChoiceQuestion){
+                    questionResponse.setOptions(((MultipleChoiceQuestion) question).getOptions());
+                }else{
+                    questionResponse.setOptions(null);
+                }
+                questionResponses.add(questionResponse);
+            }
+            quizNoAnswerResponse.setQuestionResponses(questionResponses);
+            lessonDetails.setQuizNoAnswerResponse(quizNoAnswerResponse);
+
+        }
+
+
+
+        return lessonDetails;
+    }
+
+    @Override
+    public void deleteLesson(Long id) {
+        Lesson lesson = findLessonById(id);
+        if (lesson.getIsDeleted()){
+            throw new ResourceNotFoundException("lesson already deleted");
+        }
+        lesson.setIsDeleted(true);
+        List<Quiz> quizzes = lesson.getQuizzes();
+        for (Quiz quiz:quizzes){
+            quiz.setIsDeleted(true);
+        }
+        lessonRepository.save(lesson);
+    }
+
 
     private Chapter findChapterById(Long id){
         return chapterRepository.findById(id).orElseThrow(
@@ -105,8 +214,5 @@ public class LessonServiceImpl implements LessonService {
                 () -> new ResourceNotFoundException("lesson not found with the id:"+ id)
         );
     }
-
-
-
 
 }
