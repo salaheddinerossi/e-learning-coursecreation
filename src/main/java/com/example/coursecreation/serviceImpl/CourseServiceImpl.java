@@ -14,6 +14,7 @@ import com.example.coursecreation.response.CourseCreatedResponse;
 import com.example.coursecreation.response.CourseDetailsResponse;
 import com.example.coursecreation.response.CourseResponse;
 import com.example.coursecreation.service.CourseService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,7 +50,14 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public CourseCreatedResponse createCourse(CourseDto courseDto, String email) {
         Course course = courseMapper.toCourse(courseDto);
-        course.setTeacher(findTeacherByEmail(email));
+
+        Teacher teacher = findTeacherByEmail(email);
+
+        if (!teacher.getIsActive()){
+            throw new UnauthorizedException("your account is not active yet");
+        }
+
+        course.setTeacher(teacher);
         course.setCategory(findCategoryById(courseDto.getCategoryId()));
         if(courseDto.getSkillId()!=null){
             course.setSkill(findSkillById(courseDto.getSkillId()));
@@ -61,7 +69,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public CourseCreatedResponse modifyCourse(Long id, CourseDto courseDto, String email) {
+    public CourseCreatedResponse modifyCourse(Long id, CourseDto courseDto) {
 
         Course course = findCourseById(id);
         course.setAbout(courseDto.getAbout());
@@ -82,7 +90,19 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public CourseDetailsResponse getCourseDetails(Long id) {
+
+
+
         Course course = findCourseById(id);
+        if (course.getCourseStatusEnum()!=CourseStatus.APPROVED){
+            throw new ResourceNotFoundException("this course is not approved yet ");
+        }
+
+        List<Chapter> filteredChapters = filterOutDeletedChapters(course.getChapters());
+
+        course.getChapters().clear();
+        course.getChapters().addAll(filteredChapters);
+
 
         return courseMapper.toCourseDetailsResponse(course);
     }
@@ -91,9 +111,43 @@ public class CourseServiceImpl implements CourseService {
     public List<CourseResponse> getCoursesByCategory(Long categoryId) {
         List<Course> courses = courseRepository.findCoursesByCategoryId(categoryId);
         return courses.stream()
+                .filter(course -> course.getCourseStatusEnum() == CourseStatus.APPROVED)
                 .map(courseMapper::toCourseResponse)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<CourseResponse> getPublishedCourses() {
+        List<Course> courses = courseRepository.findAll();
+        return courses.stream()
+                .filter(course -> course.getCourseStatusEnum() == CourseStatus.PUBLISHED)
+                .map(courseMapper::toCourseResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CourseDetailsResponse getPublishedCourseDetails(Long id) {
+        Course course = findCourseById(id);
+        if (course.getCourseStatusEnum()==CourseStatus.DRAFT){
+            throw new ResourceNotFoundException("this course is not published yet ");
+        }
+
+        List<Chapter> filteredChapters = filterOutDeletedChapters(course.getChapters());
+
+
+        course.getChapters().clear();
+        course.getChapters().addAll(filteredChapters);
+
+
+        return courseMapper.toCourseDetailsResponse(course);
+
+    }
+
+    @Override
+    public CourseCreatedResponse getCourseFromTeacher(Long courseId) {
+        return courseMapper.toCourseCreatedResponse(findCourseById(courseId));
+    }
+
 
     @Override
     public void publishCourse(Long id) {
@@ -133,6 +187,26 @@ public class CourseServiceImpl implements CourseService {
         if (!category.getContainsCategories()){
             throw new BadRequestException("this category cannot contains any course");
         }
+    }
+
+    private List<Chapter> filterOutDeletedChapters(List<Chapter> originalChapters) {
+        originalChapters.stream()
+                .filter(chapter -> !Boolean.TRUE.equals(chapter.getIsDeleted()))
+                .forEach(chapter -> {
+                    List<Lesson> filteredLessons = filterOutDeletedLessons(chapter.getLessons());
+                    chapter.getLessons().clear();
+                    chapter.getLessons().addAll(filteredLessons);
+                });
+
+        return originalChapters.stream()
+                .filter(chapter -> !Boolean.TRUE.equals(chapter.getIsDeleted()))
+                .collect(Collectors.toList());
+    }
+
+    private List<Lesson> filterOutDeletedLessons(List<Lesson> originalLessons) {
+        return originalLessons.stream()
+                .filter(lesson -> !Boolean.TRUE.equals(lesson.getIsDeleted()))
+                .collect(Collectors.toList());
     }
 
 

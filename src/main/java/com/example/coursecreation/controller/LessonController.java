@@ -3,7 +3,9 @@ package com.example.coursecreation.controller;
 
 import com.example.coursecreation.dto.LessonDto;
 import com.example.coursecreation.dto.SummaryRequest;
+import com.example.coursecreation.dto.UserDetailsDto;
 import com.example.coursecreation.exception.ResourceNotFoundException;
+import com.example.coursecreation.exception.UnauthorizedException;
 import com.example.coursecreation.response.JsonResponse.SummaryResponse;
 import com.example.coursecreation.response.lessonResponse.LessonCreatedResponse;
 import com.example.coursecreation.response.lessonResponse.LessonDetails;
@@ -41,7 +43,8 @@ public class LessonController {
     @PostMapping("/")
     public ResponseEntity<ApiResponse<LessonCreatedResponse>> createLesson(@RequestBody LessonDto lessonDto, @RequestHeader("Authorization") String token) {
 
-        if (!authService.isTeacher(authUrl, token)) {
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+        if (!teacherService.teacherHasChapter(lessonDto.getChapterId(), userDetailsDto.getEmail())) {
             throw new ResourceNotFoundException("you don't have the permission to create a course");
         }
 
@@ -62,7 +65,17 @@ public class LessonController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<LessonDetails>> getLessonDetails(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<LessonDetails>> getLessonDetails(@PathVariable Long id,@RequestHeader("Authorization")String token) {
+
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+
+        if (authService.isStudent(userDetailsDto.getRole())){
+            if (!teacherService.studentHasLesson(id, userDetailsDto.getEmail())){
+                throw  new UnauthorizedException("you don't have the permission to access this lesson");
+            }
+        }
+
+
         LessonDetails lessonDetails = lessonService.getLessonDetails(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "lesson had been fetched successfully", lessonDetails));
     }

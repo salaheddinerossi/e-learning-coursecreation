@@ -13,4 +13,6 @@ public interface TeacherService {
     Boolean teacherHasChapter(Long chapterId,String email);
     Boolean teacherHasQuiz(Long quizId,String email);
 
+    Boolean studentHasLesson(Long lessonId,String email);
+
 }

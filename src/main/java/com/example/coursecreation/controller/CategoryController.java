@@ -1,13 +1,13 @@
 package com.example.coursecreation.controller;
 
 import com.example.coursecreation.dto.CategoryDto;
+import com.example.coursecreation.dto.UserDetailsDto;
 import com.example.coursecreation.exception.UnauthorizedException;
 import com.example.coursecreation.response.CategoryNameResponse;
 import com.example.coursecreation.response.CategoryResponse;
 import com.example.coursecreation.service.AuthService;
 import com.example.coursecreation.service.CategoryService;
 import com.example.coursecreation.util.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +25,6 @@ public class CategoryController {
     final
     CategoryService categoryService;
 
-
     final
     AuthService authService;
 
@@ -37,7 +36,8 @@ public class CategoryController {
     @PostMapping("/")
     public ResponseEntity<ApiResponse<CategoryResponse>>  createCategory(@RequestBody CategoryDto categoryDto,@RequestHeader("Authorization") String token){
 
-        if (!authService.isAdmin(authUrl,token)){
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+        if (!authService.isAdmin(userDetailsDto.getRole())){
             throw new UnauthorizedException("you are not authorized to perform this action");
         }
 
@@ -49,10 +49,10 @@ public class CategoryController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<CategoryResponse>>  modifyCategory(@PathVariable Long id,@RequestBody CategoryDto categoryDto,@RequestHeader("Authorization") String token){
 
-        if (!authService.isAdmin(authUrl,token)){
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+        if (!authService.isAdmin(userDetailsDto.getRole())){
             throw new UnauthorizedException("you are not authorized to perform this action");
         }
-
 
         CategoryResponse categoryResponse = categoryService.modifyCategoryName(id, categoryDto);
         return ResponseEntity.ok(new ApiResponse<>(true, "Category modified successfully",categoryResponse));
@@ -74,9 +74,5 @@ public class CategoryController {
         return ResponseEntity.ok(new ApiResponse<>(true,"categories fetched successfully" , categoryResponses));
 
     }
-
-
-
-
 
 }

@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 
 @Service
@@ -108,31 +107,15 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public LessonCreatedResponse modifyResponse(Long id, LessonDto lessonDto) {
 
-
         Lesson lesson = findLessonById(id);
 
         if (lesson.getIsDeleted()){
             throw  new ResourceNotFoundException("this lesson has been deleted by the owner");
         }
 
-
-        lesson.setTitle(lesson.getTitle());
-        lesson.setDescription(lesson.getDescription());
-        if (!Objects.equals(lesson.getMaterial(), lessonDto.getMaterial()) && lessonDto.getUsesAI()){
-            lesson.setUsesAI(true);
-            DetailedTranscriptionResponse transcriptionResponse = aiService.getTranscribe(lessonDto.getMaterial()).block();
-            if(transcriptionResponse != null) {
-                lesson.setTranscribe(transcriptionResponse.getTranscription());
-                lesson.setSummary(transcriptionResponse.getSummary());
-                lesson.setAdvices(transcriptionResponse.getAdvice());
-            }
-        }
-        lesson.setMaterial(lesson.getMaterial());
-
-        for (Quiz quiz:lesson.getQuizzes()){
-            quiz.setIsDeleted(Boolean.TRUE);
-        }
-
+        lesson.setTitle(lessonDto.getTitle());
+        lesson.setDescription(lessonDto.getDescription());
+        lessonRepository.save(lesson);
         return lessonMapper.lessonToLessonCreatedResponse(lessonRepository.save(lesson));
     }
 
@@ -140,11 +123,10 @@ public class LessonServiceImpl implements LessonService {
     @Transactional
     public LessonDetails getLessonDetails(Long id) {
         Lesson lesson = findLessonById(id);
-        if (lesson.getIsDeleted()){
-            throw  new ResourceNotFoundException("this lesson has been deleted by the owner");
-        }
         LessonDetails lessonDetails = lessonMapper.lessonToLessonDetails(lesson);
 
+
+        List<QuizNoAnswerResponse> quizNoAnswerResponses = new ArrayList<>();
 
         for (Quiz quiz:lesson.getQuizzes()){
 
@@ -179,11 +161,9 @@ public class LessonServiceImpl implements LessonService {
                 questionResponses.add(questionResponse);
             }
             quizNoAnswerResponse.setQuestionResponses(questionResponses);
-            lessonDetails.setQuizNoAnswerResponse(quizNoAnswerResponse);
-
+            quizNoAnswerResponses.add(quizNoAnswerResponse);
         }
-
-
+        lessonDetails.setQuizNoAnswerResponses(quizNoAnswerResponses);
 
         return lessonDetails;
     }

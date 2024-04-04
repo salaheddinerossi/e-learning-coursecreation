@@ -3,6 +3,8 @@ package com.example.coursecreation.response.lessonResponse;
 import com.example.coursecreation.response.quizResponses.QuizNoAnswerResponse;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class LessonDetails {
 
@@ -16,6 +18,8 @@ public class LessonDetails {
 
     private Boolean usesAI;
 
-    private QuizNoAnswerResponse quizNoAnswerResponse;
+    private String summary;
+
+    private List<QuizNoAnswerResponse> quizNoAnswerResponses;
 
 }

@@ -18,12 +18,14 @@ public class CourseCreatedResponse {
 
     private String requirements;
 
-    private Enum<Language> languageEnum;
+    private Language languageEnum;
 
-    private Enum<CourseLevel> courseLevelEnum;
+    private CourseLevel courseLevelEnum;
 
-    private Enum<CourseStatus> courseStatusEnum;
+    private CourseStatus courseStatusEnum;
 
     private String SkillName;
+
+    private Long categoryId;
 
 }

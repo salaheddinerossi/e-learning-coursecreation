@@ -1,6 +1,8 @@
 package com.example.coursecreation.serviceImpl;
 
+import com.example.coursecreation.Enums.CourseStatus;
 import com.example.coursecreation.dto.QuizInstructions;
+import com.example.coursecreation.exception.BadRequestException;
 import com.example.coursecreation.exception.ResourceNotFoundException;
 import com.example.coursecreation.model.Lesson;
 import com.example.coursecreation.model.Quizzes.*;
@@ -74,8 +76,12 @@ public class QuizServiceImpl implements QuizService {
     public List<MultipleChoiceResponse> modifyMultipleChoiceQuiz(Long quizId, QuizInstructions quizInstructions) {
 
         Quiz quiz1 = findQuizById(quizId);
-        Lesson lesson =quiz1.getLesson();
 
+        if (quiz1.getLesson().getChapter().getCourse().getCourseStatusEnum()!= CourseStatus.DRAFT){
+            throw new BadRequestException("course is not anymore in draft you can't modify the quiz");
+        }
+
+        Lesson lesson =quiz1.getLesson();
 
         List<MultipleChoiceResponse> multipleChoiceResponses = Objects.requireNonNull(aiService.generateMultipleChoiceQuiz(lesson.getTranscribe(),quizInstructions.getAdditional_instructions()).block()).getQuestions();
 

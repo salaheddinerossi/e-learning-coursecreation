@@ -30,7 +30,7 @@ public class Course {
     private Language languageEnum;
     private CourseLevel courseLevelEnum;
 
-    private Enum<CourseStatus> courseStatusEnum;
+    private CourseStatus courseStatusEnum;
 
     private LocalDate date;
 
@@ -48,5 +48,9 @@ public class Course {
     @ManyToOne
     @JoinColumn(name = "skill_id")
     private Skill skill;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CourseEnrollment> courseEnrollments = new ArrayList<>();
+
 
 }

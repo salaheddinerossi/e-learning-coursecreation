@@ -47,15 +47,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Boolean isAdmin(String serviceUrl, String token) {
+    public Boolean isAdmin(String role) {
 
-        UserDetailsDto userDetailsDto = this.getUserDetailsFromAuthService(serviceUrl,token);
-        return Objects.equals(userDetailsDto.getRole(), "ADMIN");
+        return Objects.equals(role, "ROLE_ADMIN");
+    }
+
+    @Override
+    public Boolean isStudent(String role) {
+        return Objects.equals(role, "ROLE_STUDENT");
     }
 
     @Override
     public Boolean isTeacher(String serviceUrl, String token) {
         UserDetailsDto userDetailsDto = this.getUserDetailsFromAuthService(serviceUrl,token);
-        return Objects.equals(userDetailsDto.getRole(), "TEACHER");
+        return Objects.equals(userDetailsDto.getRole(), "ROLE_TEACHER");
     }
 }

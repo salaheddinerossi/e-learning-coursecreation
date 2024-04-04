@@ -6,6 +6,8 @@ import com.example.coursecreation.exception.ResourceNotFoundException;
 import com.example.coursecreation.mapper.ChapterMapper;
 import com.example.coursecreation.model.Chapter;
 import com.example.coursecreation.model.Course;
+import com.example.coursecreation.model.Lesson;
+import com.example.coursecreation.model.Quizzes.Quiz;
 import com.example.coursecreation.repository.ChapterRepository;
 import com.example.coursecreation.repository.CourseRepository;
 import com.example.coursecreation.response.ChapterResponse;
@@ -51,6 +53,13 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     @Override
+    public void deleteChapter(Long id) {
+        Chapter chapter = findChapterById(id);
+        markChapterAsDeleted(chapter);
+        chapterRepository.save(chapter);
+    }
+
+    @Override
     public List<ChapterNameDto> getChildChapters(Long id) {
         Chapter parentChapter = findChapterById(id);
         return chapterRepository.findByParentChapter(parentChapter).stream()
@@ -80,4 +89,23 @@ public class ChapterServiceImpl implements ChapterService {
                 () -> new ResourceNotFoundException("course not found with the id:"+ id)
         );
     }
+
+    private void markChapterAsDeleted(Chapter chapter) {
+        if (chapter == null) return;
+
+        chapter.setIsDeleted(true);
+        if (Boolean.TRUE.equals(chapter.getContainsChapters())) {
+            for (Chapter childChapter : chapter.getChildChapters()) {
+                markChapterAsDeleted(childChapter);
+            }
+        } else {
+            for (Lesson lesson : chapter.getLessons()) {
+                lesson.setIsDeleted(true);
+                for (Quiz quiz: lesson.getQuizzes()){
+                    quiz.setIsDeleted(true);
+                }
+            }
+        }
+    }
+
 }

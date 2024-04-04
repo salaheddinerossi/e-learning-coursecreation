@@ -19,6 +19,8 @@ public class Chapter {
 
     private Boolean containsChapters;
 
+    private Boolean isDeleted;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     @JsonIgnore

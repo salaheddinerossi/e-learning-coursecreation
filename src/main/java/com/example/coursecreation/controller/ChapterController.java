@@ -3,6 +3,7 @@ package com.example.coursecreation.controller;
 
 import com.example.coursecreation.dto.ChapterDto;
 import com.example.coursecreation.dto.ChapterNameDto;
+import com.example.coursecreation.dto.UserDetailsDto;
 import com.example.coursecreation.exception.UnauthorizedException;
 import com.example.coursecreation.response.ChapterResponse;
 import com.example.coursecreation.service.AuthService;
@@ -61,4 +62,16 @@ public class ChapterController {
         return ResponseEntity.ok(new ApiResponse<>(true, "chapter  has been modified ",chapterResponse));
 
     }
+
+    @DeleteMapping("/{chapterId}")
+    ResponseEntity<ApiResponse<?>> deleteChapter(@PathVariable Long chapterId,@RequestHeader("Authorization") String token){
+
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+        if (!teacherService.teacherHasChapter(chapterId,userDetailsDto.getEmail())){
+            throw new UnauthorizedException("you are not the owner of this course");
+        }
+        chapterService.deleteChapter(chapterId);
+        return ResponseEntity.ok(new ApiResponse<>(true,"chapter and lessons and quizzes have been deleted",null ));
+    }
+
 }

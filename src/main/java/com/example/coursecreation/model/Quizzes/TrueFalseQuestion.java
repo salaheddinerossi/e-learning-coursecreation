@@ -9,6 +9,6 @@ import lombok.EqualsAndHashCode;
 @Entity
 @Data
 public class TrueFalseQuestion extends Question{
-    private boolean correctAnswer;
+    private Boolean correctAnswer;
 
 }

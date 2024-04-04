@@ -27,12 +27,16 @@ public interface CourseMapper {
     Course toCourse(CourseDto dto);
 
 
+    @Mapping(source = "course.category.id",target = "categoryId")
+    @Mapping(source = "course.category.title",target = "skillName")
     CourseCreatedResponse toCourseCreatedResponse(Course course);
 
 
     CourseResponse toCourseResponse(Course course);
 
     @Mapping(target = "chapterCourseResponses", source = "chapters")
+    @Mapping(target = "skillId",source = "course.skill.id")
+    @Mapping(target = "skillName",source = "course.skill.name")
     CourseDetailsResponse toCourseDetailsResponse(Course course);
 
             // Chapter and lesson mappings

@@ -10,12 +10,19 @@ import java.util.List;
 public interface CourseService {
     CourseCreatedResponse createCourse(CourseDto courseDto, String email);
 
-    CourseCreatedResponse modifyCourse(Long id,CourseDto courseDto, String email);
+    CourseCreatedResponse modifyCourse(Long id,CourseDto courseDto);
 
     CourseDetailsResponse getCourseDetails(Long id);
 
     void publishCourse(Long id);
 
     List<CourseResponse> getCoursesByCategory(Long categoryId);
+
+    List<CourseResponse> getPublishedCourses();
+
+    CourseDetailsResponse getPublishedCourseDetails(Long id);
+
+    CourseCreatedResponse getCourseFromTeacher(Long courseId);
+
 
 }

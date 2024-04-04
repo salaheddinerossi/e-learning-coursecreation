@@ -1,6 +1,7 @@
 package com.example.coursecreation.controller;
 
 import com.example.coursecreation.dto.CourseDto;
+import com.example.coursecreation.dto.UserDetailsDto;
 import com.example.coursecreation.exception.UnauthorizedException;
 import com.example.coursecreation.response.CourseCreatedResponse;
 import com.example.coursecreation.response.CourseDetailsResponse;
@@ -57,7 +58,7 @@ public class CourseController {
             throw new UnauthorizedException("you don't have the permission to modify this course");
         }
 
-        CourseCreatedResponse courseCreatedResponse = courseService.modifyCourse(id,courseDto,email);
+        CourseCreatedResponse courseCreatedResponse = courseService.modifyCourse(id,courseDto);
         return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"course has been modified",courseCreatedResponse));
     }
 
@@ -85,6 +86,38 @@ public class CourseController {
         return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"data has been fetched successfully",courseResponses));
     }
 
+    @GetMapping("/published")
+    ResponseEntity<ApiResponse<List<CourseResponse>>> getPublishedCourses(@RequestHeader("Authorization")String token){
 
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
 
+        if (!authService.isAdmin(userDetailsDto.getRole())){
+            throw  new UnauthorizedException("you need to be admin to perform this action");
+        }
+
+        List<CourseResponse> courseResponses = courseService.getPublishedCourses();
+        return ResponseEntity.ok(new ApiResponse<>(true,"course have been fetched successfully",courseResponses));
+    }
+
+    @GetMapping("/admin/{id}")
+    ResponseEntity<ApiResponse<CourseDetailsResponse>> getCourseDetailResponseByAdmin(@PathVariable Long id,@RequestHeader("Authorization") String token){
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+
+        if (!authService.isAdmin(userDetailsDto.getRole())){
+            throw  new UnauthorizedException("you need to be admin to perform this action");
+        }
+
+        return ResponseEntity.ok(new ApiResponse<>(true,"course has been fetched",courseService.getPublishedCourseDetails(id)));
+    }
+
+    @GetMapping("/teacher/{courseId}")
+    ResponseEntity<ApiResponse<CourseCreatedResponse>> getCourseFromTeacher(@PathVariable Long courseId,@RequestHeader("Authorization")String token){
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+
+        if (!teacherService.teacherHasCourse(courseId, userDetailsDto.getEmail())){
+            throw new UnauthorizedException("you are not the owner of this course");
+        }
+
+        return ResponseEntity.ok(new ApiResponse<>(true,"course has been fetched",courseService.getCourseFromTeacher(courseId)));
+    }
 }

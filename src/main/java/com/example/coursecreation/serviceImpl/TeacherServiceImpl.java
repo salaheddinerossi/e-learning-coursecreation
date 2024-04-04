@@ -5,11 +5,9 @@ import com.example.coursecreation.model.Chapter;
 import com.example.coursecreation.model.Course;
 import com.example.coursecreation.model.Lesson;
 import com.example.coursecreation.model.Quizzes.Quiz;
-import com.example.coursecreation.model.Teacher;
 import com.example.coursecreation.repository.*;
 import com.example.coursecreation.service.TeacherService;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -33,12 +31,16 @@ public class TeacherServiceImpl implements TeacherService {
     final
     QuizRepository quizRepository;
 
-    public TeacherServiceImpl(TeacherRepository teacherRepository, CourseRepository courseRepository, LessonRepository lessonRepository, ChapterRepository chapterRepository, QuizRepository quizRepository) {
+    final
+    StudentLessonRepository studentLessonRepository;
+
+    public TeacherServiceImpl(TeacherRepository teacherRepository, CourseRepository courseRepository, LessonRepository lessonRepository, ChapterRepository chapterRepository, QuizRepository quizRepository, StudentLessonRepository studentLessonRepository) {
         this.teacherRepository = teacherRepository;
         this.courseRepository = courseRepository;
         this.lessonRepository = lessonRepository;
         this.chapterRepository = chapterRepository;
         this.quizRepository = quizRepository;
+        this.studentLessonRepository = studentLessonRepository;
     }
 
 
@@ -64,6 +66,11 @@ public class TeacherServiceImpl implements TeacherService {
     public Boolean teacherHasQuiz(Long quizId, String email) {
 
         return Objects.equals(findQuiz(quizId).getLesson().getChapter().getCourse().getTeacher().getEmail(), email);
+    }
+
+    @Override
+    public Boolean studentHasLesson(Long lessonId, String email) {
+        return studentLessonRepository.findByLessonIdAndCourseEnrollmentStudentEmail(lessonId,email).isPresent();
     }
 
     private Course findCourseById(Long id){
