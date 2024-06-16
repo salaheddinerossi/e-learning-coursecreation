@@ -1,6 +1,7 @@
 package com.example.coursecreation.dto;
 
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class CategoryDto {
@@ -11,6 +12,8 @@ public class CategoryDto {
 
     private Boolean containsCategories;
 
-    private String icon;
+    private MultipartFile icon;
+
+    private String description;
 
 }

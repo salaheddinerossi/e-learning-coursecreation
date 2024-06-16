@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class ChapterResponse {
+
     private Long id;
 
     private String title;

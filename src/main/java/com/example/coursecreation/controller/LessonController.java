@@ -7,6 +7,7 @@ import com.example.coursecreation.dto.UserDetailsDto;
 import com.example.coursecreation.exception.ResourceNotFoundException;
 import com.example.coursecreation.exception.UnauthorizedException;
 import com.example.coursecreation.response.JsonResponse.SummaryResponse;
+import com.example.coursecreation.response.TeacherLessonDetails;
 import com.example.coursecreation.response.lessonResponse.LessonCreatedResponse;
 import com.example.coursecreation.response.lessonResponse.LessonDetails;
 import com.example.coursecreation.service.AuthService;
@@ -16,6 +17,9 @@ import com.example.coursecreation.util.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/lesson")
@@ -41,7 +45,7 @@ public class LessonController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<ApiResponse<LessonCreatedResponse>> createLesson(@RequestBody LessonDto lessonDto, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<ApiResponse<LessonCreatedResponse>> createLesson(@ModelAttribute LessonDto lessonDto , @RequestHeader("Authorization") String token) throws IOException {
 
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
         if (!teacherService.teacherHasChapter(lessonDto.getChapterId(), userDetailsDto.getEmail())) {
@@ -68,13 +72,17 @@ public class LessonController {
     public ResponseEntity<ApiResponse<LessonDetails>> getLessonDetails(@PathVariable Long id,@RequestHeader("Authorization")String token) {
 
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
-
         if (authService.isStudent(userDetailsDto.getRole())){
             if (!teacherService.studentHasLesson(id, userDetailsDto.getEmail())){
                 throw  new UnauthorizedException("you don't have the permission to access this lesson");
             }
         }
 
+        if(authService.isTeacher(userDetailsDto.getRole())){
+            if (!teacherService.teacherHasLesson(id, userDetailsDto.getEmail())){
+                throw  new UnauthorizedException("you don't have the permission to access this lesson");
+            }
+        }
 
         LessonDetails lessonDetails = lessonService.getLessonDetails(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "lesson had been fetched successfully", lessonDetails));
@@ -84,7 +92,7 @@ public class LessonController {
     public ResponseEntity<ApiResponse<LessonCreatedResponse>> modifyLesson(@PathVariable Long id, @RequestBody LessonDto lessonDto, @RequestHeader("Authorization") String token) {
         String email = authService.getUserDetailsFromAuthService(authUrl, token).getEmail();
         if (!teacherService.teacherHasLesson(id, email)) {
-            throw new ResourceNotFoundException("you don't have the permission to modoify this lesson");
+            throw new ResourceNotFoundException("you don't have the permission to modify this lesson");
         }
 
         LessonCreatedResponse lessonCreatedResponse = lessonService.modifyResponse(id, lessonDto);
@@ -102,4 +110,17 @@ public class LessonController {
         return ResponseEntity.ok(new ApiResponse<>(true,"lesson has been deleted",null));
     }
 
+
+    @GetMapping("teacher/{id}")
+    public ResponseEntity<ApiResponse<TeacherLessonDetails>> getLessonDetailsForTeacher(@PathVariable Long id, @RequestHeader("Authorization")String token) {
+
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+
+        if (!teacherService.teacherHasLesson(id, userDetailsDto.getEmail())){
+            throw  new UnauthorizedException("you don't have the permission to access this lesson");
+        }
+
+        TeacherLessonDetails teacherLessonDetails = lessonService.getTeacherLessonDetails(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "lesson had been fetched successfully", teacherLessonDetails));
+    }
 }

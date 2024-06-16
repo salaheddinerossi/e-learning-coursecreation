@@ -30,7 +30,7 @@ public class CourseDetailsResponse {
 
     private Long skillId;
 
+    private Long categoryId;
+
     private List<ChapterCourseResponse> chapterCourseResponses;
-
-
 }

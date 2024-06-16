@@ -28,7 +28,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserDetailsDto getUserDetailsFromAuthService(String serviceUrl, String token) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + token); // Set the token
+        if (!token.startsWith("Bearer ")) {
+            token = "Bearer " + token;
+        }
+        headers.set("Authorization", token);
         HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
 
         try{
@@ -46,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
 
     }
 
+
     @Override
     public Boolean isAdmin(String role) {
 
@@ -58,8 +62,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Boolean isTeacher(String serviceUrl, String token) {
-        UserDetailsDto userDetailsDto = this.getUserDetailsFromAuthService(serviceUrl,token);
-        return Objects.equals(userDetailsDto.getRole(), "ROLE_TEACHER");
+    public Boolean isTeacher(String role) {
+        return Objects.equals(role, "ROLE_TEACHER");
     }
 }

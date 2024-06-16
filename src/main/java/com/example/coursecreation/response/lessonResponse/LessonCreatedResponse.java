@@ -3,6 +3,8 @@ package com.example.coursecreation.response.lessonResponse;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class LessonCreatedResponse {
 
@@ -17,5 +19,10 @@ public class LessonCreatedResponse {
     private Boolean usesAI;
 
     private Long chapterId;
+
+    private List<String> advices;
+
+    private String summary;
+
 
 }

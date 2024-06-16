@@ -6,7 +6,5 @@ import lombok.Data;
 @Data
 public class ChapterNameDto {
 
-    private Long id;
-
     private String title;
 }

@@ -9,6 +9,8 @@ public interface AuthService {
 
     public Boolean isAdmin(String role);
     public Boolean isStudent(String role);
-    public Boolean isTeacher(String serviceUrl,String token);
+
+    public Boolean isTeacher(String role);
+
 
 }

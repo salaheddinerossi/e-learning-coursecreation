@@ -1,16 +1,17 @@
 package com.example.coursecreation.response.quizResponses;
 
+
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class QuestionResponse {
+public class QuizWithAnswer {
 
     private Long id;
 
-    private String question;
+    private String type;
 
-    private List<String> options;
+    private List<QuestionAnswer> questionAnswers;
 
 }

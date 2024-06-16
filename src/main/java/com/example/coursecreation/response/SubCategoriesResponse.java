@@ -2,15 +2,17 @@ package com.example.coursecreation.response;
 
 import lombok.Data;
 
+import java.util.List;
+
+
 @Data
-public class CategoryResponse {
+public class SubCategoriesResponse {
+
     private Long id;
 
     private String title;
 
-    private String icon;
-
     private String description;
 
-    private Boolean containsCategories;
+    List<CategoryResponse> categoryResponses;
 }

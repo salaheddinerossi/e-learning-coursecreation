@@ -9,6 +9,9 @@ import com.example.coursecreation.model.Quizzes.*;
 import com.example.coursecreation.repository.LessonRepository;
 import com.example.coursecreation.repository.QuizRepository;
 import com.example.coursecreation.response.JsonResponse.*;
+import com.example.coursecreation.response.quizResponses.ExplanatoryQuiz;
+import com.example.coursecreation.response.quizResponses.MultipleChoiceQuiz;
+import com.example.coursecreation.response.quizResponses.TrueFalseQuiz;
 import com.example.coursecreation.service.AiService;
 import com.example.coursecreation.service.QuizService;
 import jakarta.transaction.Transactional;
@@ -38,42 +41,99 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional
-    public List<MultipleChoiceResponse> generateMultipleChoiceQuiz(Long lessonID) {
+    public MultipleChoiceQuiz generateMultipleChoiceQuiz(Long lessonID) {
         List<MultipleChoiceResponse> multipleChoiceResponses = Objects.requireNonNull(aiService.generateMultipleChoiceQuiz(findLessonById(lessonID).getTranscribe()," ").block()).getQuestions();
+
+        return getMultipleChoiceQuiz(lessonID, multipleChoiceResponses);
+    }
+
+    @Override
+    @Transactional
+    public ExplanatoryQuiz generateExplanatoryQuiz(Long lessonID) {
+        List<ExplanatoryResponse> explanatoryResponses = Objects.requireNonNull(aiService.generateExplanatoryQuiz(findLessonById(lessonID).getTranscribe()," ").block()).getQuestions();
+
+        return getExplanatoryQuiz(lessonID, explanatoryResponses);
+    }
+
+    @Override
+    @Transactional
+    public TrueFalseQuiz generateTrueFalseQuiz(Long lessonID) {
+        List<TrueFalseResponse> trueFalseResponses = Objects.requireNonNull(aiService.generateTrueFalseQuiz(findLessonById(lessonID).getTranscribe(), " ").block()).getQuestions();
+
+        return getTrueFalseQuiz(lessonID, trueFalseResponses);
+    }
+
+    @Override
+    public MultipleChoiceQuiz createMultipleChoiceQuizManually(Long lessonID, List<MultipleChoiceResponse> multipleChoiceResponses) {
+        return getMultipleChoiceQuiz(lessonID, multipleChoiceResponses);
+    }
+
+
+    @Override
+    public ExplanatoryQuiz createExplanatoryQuizManually(Long lessonID, List<ExplanatoryResponse> explanatoryResponses) {
+        return getExplanatoryQuiz(lessonID, explanatoryResponses);
+    }
+
+
+    @Override
+    public TrueFalseQuiz createTrueFalseQuizManually(Long lessonID, List<TrueFalseResponse> trueFalseResponses) {
+        return getTrueFalseQuiz(lessonID, trueFalseResponses);
+    }
+
+    private MultipleChoiceQuiz getMultipleChoiceQuiz(Long lessonID, List<MultipleChoiceResponse> multipleChoiceResponses) {
+        if (multipleChoiceResponses.isEmpty()){
+            throw new BadRequestException("error during generating the quiz");
+        }
 
         Quiz quiz = createMultipleChoiceQuiz(lessonID,multipleChoiceResponses);
 
-        quizRepository.save(quiz);
+        MultipleChoiceQuiz multipleChoiceQuiz = new MultipleChoiceQuiz();
+        Quiz quiz1 = quizRepository.save(quiz);
+        multipleChoiceQuiz.setId(quiz1.getId());
+        multipleChoiceQuiz.setMultipleChoiceResponses(multipleChoiceResponses);
 
-        return multipleChoiceResponses;
+        return multipleChoiceQuiz;
     }
 
-    @Override
-    @Transactional
-    public List<ExplanatoryResponse> generateExplanatoryQuiz(Long lessonID) {
-        List<ExplanatoryResponse> explanatoryResponses = Objects.requireNonNull(aiService.generateExplanatoryQuiz(findLessonById(lessonID).getTranscribe()," ").block()).getQuestions();
+
+    private ExplanatoryQuiz getExplanatoryQuiz(Long lessonID, List<ExplanatoryResponse> explanatoryResponses) {
+        if (explanatoryResponses.isEmpty()){
+            throw new BadRequestException("error during generating the quiz");
+        }
 
         Quiz quiz = createExplanatoryQuiz(lessonID,explanatoryResponses);
 
-        quizRepository.save(quiz);
+        Quiz quiz1 = quizRepository.save(quiz);
 
-        return explanatoryResponses;
+        ExplanatoryQuiz explanatoryQuiz = new ExplanatoryQuiz();
+
+        explanatoryQuiz.setId(quiz1.getId());
+        explanatoryQuiz.setExplanatoryResponses(explanatoryResponses);
+
+        return explanatoryQuiz;
     }
 
-    @Override
-    @Transactional
-    public List<TrueFalseResponse> generateTrueFalseQuiz(Long lessonID) {
-        List<TrueFalseResponse> trueFalseResponses = Objects.requireNonNull(aiService.generateTrueFalseQuiz(findLessonById(lessonID).getTranscribe(), " ").block()).getQuestions();
+
+    private TrueFalseQuiz getTrueFalseQuiz(Long lessonID, List<TrueFalseResponse> trueFalseResponses) {
+        if (trueFalseResponses.isEmpty()){
+            throw new BadRequestException("error during generating the quiz");
+        }
 
         Quiz quiz = createTrueFalseQuiz(lessonID,trueFalseResponses);
 
-        quizRepository.save(quiz);
+        Quiz quiz1 = quizRepository.save(quiz);
 
-        return trueFalseResponses;
+        TrueFalseQuiz trueFalseQuiz = new TrueFalseQuiz();
+
+        trueFalseQuiz.setId(quiz1.getId());
+        trueFalseQuiz.setTrueFalseResponses(trueFalseResponses);
+
+        return trueFalseQuiz;
     }
 
+
     @Override
-    public List<MultipleChoiceResponse> modifyMultipleChoiceQuiz(Long quizId, QuizInstructions quizInstructions) {
+    public MultipleChoiceQuiz modifyMultipleChoiceQuiz(Long quizId, QuizInstructions quizInstructions) {
 
         Quiz quiz1 = findQuizById(quizId);
 
@@ -85,49 +145,101 @@ public class QuizServiceImpl implements QuizService {
 
         List<MultipleChoiceResponse> multipleChoiceResponses = Objects.requireNonNull(aiService.generateMultipleChoiceQuiz(lesson.getTranscribe(),quizInstructions.getAdditional_instructions()).block()).getQuestions();
 
-        Quiz quiz = createMultipleChoiceQuiz(lesson.getId(), multipleChoiceResponses);
+        if(multipleChoiceResponses.isEmpty()){
+            throw  new BadRequestException("no questions have been generated");
+        }
 
-        quiz.setId(quiz1.getId());
+        quiz1.getQuestions().clear();
 
-        quizRepository.save(quiz);
+        for(MultipleChoiceResponse multipleChoiceResponse:multipleChoiceResponses){
+            MultipleChoiceQuestion multipleChoiceQuestion = new MultipleChoiceQuestion();
+            multipleChoiceQuestion.setPrompt(multipleChoiceResponse.getPrompt());
+            multipleChoiceQuestion.setOptions(multipleChoiceResponse.getOptions());
+            multipleChoiceQuestion.setCorrectAnswer(multipleChoiceResponse.getCorrectAnswer());
+            multipleChoiceQuestion.setQuiz(quiz1);
+            quiz1.getQuestions().add(multipleChoiceQuestion);
+        }
 
-        return multipleChoiceResponses;
+        quizRepository.save(quiz1);
+
+
+        MultipleChoiceQuiz multipleChoiceQuiz = new MultipleChoiceQuiz();
+
+        multipleChoiceQuiz.setMultipleChoiceResponses(multipleChoiceResponses);
+        multipleChoiceQuiz.setId(quizId);
+
+        return multipleChoiceQuiz;
 
     }
 
     @Override
-    public List<ExplanatoryResponse> modifyExplanatoryQuiz(Long quizId,QuizInstructions quizInstructions) {
+    public ExplanatoryQuiz modifyExplanatoryQuiz(Long quizId,QuizInstructions quizInstructions) {
         Quiz quiz1 = findQuizById(quizId);
         Lesson lesson =quiz1.getLesson();
 
 
         List<ExplanatoryResponse> explanatoryResponses = Objects.requireNonNull(aiService.generateExplanatoryQuiz(lesson.getTranscribe(),quizInstructions.getAdditional_instructions()).block()).getQuestions();
 
-        Quiz quiz = createExplanatoryQuiz(lesson.getId(), explanatoryResponses);
+        if (explanatoryResponses.isEmpty()){
+            throw new BadRequestException("no questions have been generated");
+        }
 
-        quiz.setId(quiz1.getId());
+        quiz1.getQuestions().clear();
 
-        quizRepository.save(quiz);
+        for (ExplanatoryResponse explanatoryResponse: explanatoryResponses){
+            ExplanatoryQuestion explanatoryQuestion = new ExplanatoryQuestion();
+            explanatoryQuestion.setQuiz(quiz1);
+            explanatoryQuestion.setPrompt(explanatoryResponse.getPrompt());
+            explanatoryQuestion.setCorrectExplanation(explanatoryResponse.getCorrectExplanation());
 
-        return explanatoryResponses;
+            quiz1.getQuestions().add(explanatoryQuestion);
+        }
+
+        quizRepository.save(quiz1);
+
+        ExplanatoryQuiz explanatoryQuiz = new ExplanatoryQuiz();
+
+        explanatoryQuiz.setExplanatoryResponses(explanatoryResponses);
+        explanatoryQuiz.setId(quizId);
+
+        return explanatoryQuiz;
     }
 
     @Override
     @Transactional
-    public List<TrueFalseResponse> modifyTrueFalseQuiz(Long quizId,QuizInstructions quizInstructions) {
+    public TrueFalseQuiz modifyTrueFalseQuiz(Long quizId,QuizInstructions quizInstructions) {
         Quiz quiz1 = findQuizById(quizId);
         Lesson lesson =quiz1.getLesson();
 
 
         List<TrueFalseResponse> trueFalseResponses = Objects.requireNonNull(aiService.generateTrueFalseQuiz(lesson.getTranscribe(),quizInstructions.getAdditional_instructions()).block()).getQuestions();
 
-        Quiz quiz = createTrueFalseQuiz(lesson.getId(), trueFalseResponses);
 
-        quiz.setId(quiz1.getId());
+        if (trueFalseResponses.isEmpty()){
+            throw new BadRequestException("no questions have been generated");
+        }
 
-        quizRepository.save(quiz);
+        quiz1.getQuestions().clear();
 
-        return trueFalseResponses;
+        for (TrueFalseResponse trueFalseResponse:trueFalseResponses){
+            TrueFalseQuestion trueFalseQuestion = new TrueFalseQuestion();
+
+            trueFalseQuestion.setPrompt(trueFalseResponse.getPrompt());
+            trueFalseQuestion.setCorrectAnswer(trueFalseResponse.getCorrectAnswer());
+            trueFalseQuestion.setQuiz(quiz1);
+
+            quiz1.getQuestions().add(trueFalseQuestion);
+        }
+
+
+        quizRepository.save(quiz1);
+
+        TrueFalseQuiz trueFalseQuiz = new TrueFalseQuiz();
+
+        trueFalseQuiz.setTrueFalseResponses(trueFalseResponses);
+        trueFalseQuiz.setId(quizId);
+
+        return trueFalseQuiz;
     }
 
     @Override

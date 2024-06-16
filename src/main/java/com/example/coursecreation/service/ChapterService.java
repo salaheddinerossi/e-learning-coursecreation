@@ -10,7 +10,7 @@ public interface ChapterService {
 
     ChapterResponse createChapter(ChapterDto chapterDto);
 
-    ChapterResponse modifyChapterName(ChapterNameDto chapterNameDto);
+    ChapterResponse modifyChapterName(Long id,ChapterNameDto chapterNameDto);
 
     void deleteChapter(Long id);
 
@@ -20,4 +20,5 @@ public interface ChapterService {
     List<ChapterNameDto> getParentChapters(Long id);
 
 
+    ChapterResponse getChapterById(Long chapterId);
 }

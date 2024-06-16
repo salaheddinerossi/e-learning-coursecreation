@@ -51,14 +51,14 @@ public class ChapterController {
     }
 
 
-    @PutMapping("/")
-    public ResponseEntity<ApiResponse<ChapterResponse>> modifyChapter(@RequestBody ChapterNameDto chapterNameDto, @RequestHeader("Authorization") String token){
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ChapterResponse>> modifyChapter(@PathVariable Long id,@RequestBody ChapterNameDto chapterNameDto, @RequestHeader("Authorization") String token){
 
-        if (!teacherService.teacherHasCourse(chapterNameDto.getId(),authService.getUserDetailsFromAuthService(authUrl,token).getEmail())){
+        if (!teacherService.teacherHasChapter(id,authService.getUserDetailsFromAuthService(authUrl,token).getEmail())){
             throw new UnauthorizedException("you are not the owner of this course");
         }
 
-        ChapterResponse chapterResponse = chapterService.modifyChapterName(chapterNameDto);
+        ChapterResponse chapterResponse = chapterService.modifyChapterName(id,chapterNameDto);
         return ResponseEntity.ok(new ApiResponse<>(true, "chapter  has been modified ",chapterResponse));
 
     }
@@ -72,6 +72,17 @@ public class ChapterController {
         }
         chapterService.deleteChapter(chapterId);
         return ResponseEntity.ok(new ApiResponse<>(true,"chapter and lessons and quizzes have been deleted",null ));
+    }
+
+    @GetMapping("/{chapterId}")
+    ResponseEntity<ApiResponse<ChapterResponse>> getChapter(@PathVariable Long chapterId,@RequestHeader("Authorization") String token){
+        UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
+        if (!teacherService.teacherHasChapter(chapterId,userDetailsDto.getEmail())){
+            throw new UnauthorizedException("you are not the owner of this course");
+        }
+
+        return ResponseEntity.ok(new ApiResponse<>(true,"chapter and lessons and quizzes have been deleted",this.chapterService.getChapterById(chapterId) ));
+
     }
 
 }

@@ -5,6 +5,8 @@ import com.example.coursecreation.dto.UserDetailsDto;
 import com.example.coursecreation.exception.UnauthorizedException;
 import com.example.coursecreation.response.CategoryNameResponse;
 import com.example.coursecreation.response.CategoryResponse;
+import com.example.coursecreation.response.CategoryResponseWithParentId;
+import com.example.coursecreation.response.SubCategoriesResponse;
 import com.example.coursecreation.service.AuthService;
 import com.example.coursecreation.service.CategoryService;
 import com.example.coursecreation.util.ApiResponse;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -34,7 +37,7 @@ public class CategoryController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<ApiResponse<CategoryResponse>>  createCategory(@RequestBody CategoryDto categoryDto,@RequestHeader("Authorization") String token){
+    public ResponseEntity<ApiResponse<CategoryResponse>>  createCategory(@ModelAttribute CategoryDto categoryDto,@RequestHeader("Authorization") String token) throws IOException {
 
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
         if (!authService.isAdmin(userDetailsDto.getRole())){
@@ -47,12 +50,15 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<CategoryResponse>>  modifyCategory(@PathVariable Long id,@RequestBody CategoryDto categoryDto,@RequestHeader("Authorization") String token){
+    public ResponseEntity<ApiResponse<CategoryResponse>>  modifyCategory(@PathVariable Long id,@ModelAttribute CategoryDto categoryDto,@RequestHeader("Authorization") String token) throws IOException {
+        System.out.println("hi 1 ");
 
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl,token);
         if (!authService.isAdmin(userDetailsDto.getRole())){
             throw new UnauthorizedException("you are not authorized to perform this action");
         }
+
+        System.out.println("hi 2 ");
 
         CategoryResponse categoryResponse = categoryService.modifyCategoryName(id, categoryDto);
         return ResponseEntity.ok(new ApiResponse<>(true, "Category modified successfully",categoryResponse));
@@ -60,10 +66,10 @@ public class CategoryController {
     }
 
     @GetMapping("/subCategories/{id}")
-    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategoryByParentCategory(@PathVariable Long id){
+    public ResponseEntity<ApiResponse<SubCategoriesResponse>> getCategoryByParentCategory(@PathVariable Long id){
 
-        List<CategoryResponse> categoryResponses = categoryService.getCategoryByParentCategory(id);
-        return ResponseEntity.ok(new ApiResponse<>(true,"categories fetched successfully" , categoryResponses));
+        SubCategoriesResponse subCategoriesResponse = categoryService.getCategoryByParentCategory(id);
+        return ResponseEntity.ok(new ApiResponse<>(true,"categories fetched successfully" , subCategoriesResponse));
 
     }
 
@@ -74,5 +80,20 @@ public class CategoryController {
         return ResponseEntity.ok(new ApiResponse<>(true,"categories fetched successfully" , categoryResponses));
 
     }
+
+    @GetMapping("/rootCategories")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getRouteCategories(){
+
+        List<CategoryResponse> categoryResponses = categoryService.getRootCategories();
+        return ResponseEntity.ok(new ApiResponse<>(true,"categories fetched successfully" , categoryResponses));
+
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<CategoryResponseWithParentId>>> getAllCategories(){
+        List<CategoryResponseWithParentId> categoryResponseWithParentIds = categoryService.getAllCategories();
+        return ResponseEntity.ok(new ApiResponse<>(true,"categories fetched successfully",categoryResponseWithParentIds));
+    }
+
 
 }

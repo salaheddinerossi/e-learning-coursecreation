@@ -21,6 +21,9 @@ public class Category {
 
     private String icon;
 
+    @Lob
+    private String description;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parentCategory;

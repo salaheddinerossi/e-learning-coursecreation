@@ -23,6 +23,8 @@ public abstract class ChapterMapper {
 
     public abstract ChapterNameDto toChapterNameDto(Chapter chapter);
 
+
+    @Mapping(target = "parentChapter_id" , source = "parentChapter.id")
     public abstract ChapterResponse toChapterResponse(Chapter chapter);
 
 

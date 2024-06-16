@@ -75,7 +75,7 @@ public class TeacherServiceImpl implements TeacherService {
 
     private Course findCourseById(Long id){
         return courseRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("course not found with this exception")
+                () -> new ResourceNotFoundException("course not found with this id" + id)
         );
     }
 

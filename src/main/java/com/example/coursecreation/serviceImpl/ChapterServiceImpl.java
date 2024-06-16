@@ -39,14 +39,15 @@ public class ChapterServiceImpl implements ChapterService {
     public ChapterResponse createChapter(ChapterDto chapterDto) {
         Chapter chapter = chapterMapper.toChapter(chapterDto);
 
+
         chapter.setCourse(findCourseById(chapterDto.getCourse_id()));
 
         return chapterMapper.toChapterResponse(chapterRepository.save(chapter));
     }
 
     @Override
-    public ChapterResponse modifyChapterName(ChapterNameDto chapterNameDto) {
-        Chapter chapter = findChapterById(chapterNameDto.getId());
+    public ChapterResponse modifyChapterName(Long id,ChapterNameDto chapterNameDto) {
+        Chapter chapter = findChapterById(id);
         chapter.setTitle(chapterNameDto.getTitle());
 
         return chapterMapper.toChapterResponse(chapterRepository.save(chapter));
@@ -76,6 +77,13 @@ public class ChapterServiceImpl implements ChapterService {
             parentChapters.add(chapterMapper.toChapterNameDto(currentChapter));
         }
         return parentChapters;
+    }
+
+    @Override
+    public ChapterResponse getChapterById(Long chapterId) {
+
+        Chapter chapter = findChapterById(chapterId);
+        return chapterMapper.toChapterResponse(chapter);
     }
 
     private Chapter findChapterById(Long id) {

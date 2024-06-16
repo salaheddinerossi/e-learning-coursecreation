@@ -1,11 +1,13 @@
 package com.example.coursecreation.controller;
 
-import com.example.coursecreation.dto.QuizInstructions;
-import com.example.coursecreation.dto.QuizRequest;
+import com.example.coursecreation.dto.*;
 import com.example.coursecreation.exception.ResourceNotFoundException;
 import com.example.coursecreation.response.JsonResponse.ExplanatoryResponse;
 import com.example.coursecreation.response.JsonResponse.MultipleChoiceResponse;
 import com.example.coursecreation.response.JsonResponse.TrueFalseResponse;
+import com.example.coursecreation.response.quizResponses.ExplanatoryQuiz;
+import com.example.coursecreation.response.quizResponses.MultipleChoiceQuiz;
+import com.example.coursecreation.response.quizResponses.TrueFalseQuiz;
 import com.example.coursecreation.service.AuthService;
 import com.example.coursecreation.service.QuizService;
 import com.example.coursecreation.service.TeacherService;
@@ -40,75 +42,112 @@ public class QuizController {
     }
 
     @PostMapping("/multipleChoice/{id}")
-    ResponseEntity<ApiResponse<List<MultipleChoiceResponse>>> generateMultipleQuiz(@PathVariable Long id,@RequestHeader("Authorization") String token){
+    ResponseEntity<ApiResponse<MultipleChoiceQuiz>> generateMultipleQuiz(@PathVariable Long id, @RequestHeader("Authorization") String token){
         String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
         if (!teacherService.teacherHasLesson(id,email)){
             throw  new ResourceNotFoundException("you don't have the permission to add this quizz");
         }
 
-        List<MultipleChoiceResponse> multipleChoiceResponses = quizService.generateMultipleChoiceQuiz(id);
-        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",multipleChoiceResponses));
+        MultipleChoiceQuiz multipleChoiceQuiz = quizService.generateMultipleChoiceQuiz(id);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",multipleChoiceQuiz));
 
     }
 
     @PostMapping("/TrueFalse/{id}")
-    ResponseEntity<ApiResponse<List<TrueFalseResponse>>> generateMultipleResponseQuiz(@PathVariable Long id,@RequestHeader("Authorization") String token){
+    ResponseEntity<ApiResponse<TrueFalseQuiz>> generateMultipleResponseQuiz(@PathVariable Long id, @RequestHeader("Authorization") String token){
         String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
         if (!teacherService.teacherHasLesson(id,email)){
             throw  new ResourceNotFoundException("you don't have the permission to add this quizz");
         }
 
-        List<TrueFalseResponse> trueFalseResponses = quizService.generateTrueFalseQuiz(id);
-        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",trueFalseResponses));
+        TrueFalseQuiz trueFalseQuiz = quizService.generateTrueFalseQuiz(id);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",trueFalseQuiz));
 
     }
 
     @PostMapping("/explanatory/{id}")
-    ResponseEntity<ApiResponse<List<ExplanatoryResponse>>> generateExplanatoryQuiz(@PathVariable Long id,@RequestHeader("Authorization") String token){
+    ResponseEntity<ApiResponse<ExplanatoryQuiz>> generateExplanatoryQuiz(@PathVariable Long id,@RequestHeader("Authorization") String token){
         String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
         if (!teacherService.teacherHasLesson(id,email)){
             throw  new ResourceNotFoundException("you don't have the permission to add this quizz");
         }
 
-        List<ExplanatoryResponse> explanatoryResponses = quizService.generateExplanatoryQuiz(id);
-        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",explanatoryResponses));
+        ExplanatoryQuiz explanatoryQuiz = quizService.generateExplanatoryQuiz(id);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",explanatoryQuiz));
+
+    }
+
+
+    @PostMapping("/multipleChoice/manual/{id}")
+    ResponseEntity<ApiResponse<MultipleChoiceQuiz>> createManualMultipleChoiceQuiz(@RequestBody MultipleChoiceQuizDto multipleChoiceQuizDto, @PathVariable Long id, @RequestHeader("Authorization") String token){
+        String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
+        if (!teacherService.teacherHasLesson(id,email)){
+            throw  new ResourceNotFoundException("you don't have the permission to add this quizz");
+        }
+
+        MultipleChoiceQuiz multipleChoiceQuiz = quizService.createMultipleChoiceQuizManually(id,multipleChoiceQuizDto.getQuestions());
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",multipleChoiceQuiz));
+
+    }
+
+    @PostMapping("/TrueFalse/manual/{id}")
+    ResponseEntity<ApiResponse<TrueFalseQuiz>> createManualTrueFalseQuiz(@RequestBody TrueFalseQuizDto trueFalseQuizDto, @PathVariable Long id, @RequestHeader("Authorization") String token){
+        String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
+        if (!teacherService.teacherHasLesson(id,email)){
+            throw  new ResourceNotFoundException("you don't have the permission to add this quizz");
+        }
+
+        TrueFalseQuiz trueFalseQuiz = quizService.createTrueFalseQuizManually(id,trueFalseQuizDto.getQuestions());
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",trueFalseQuiz));
+
+    }
+
+    @PostMapping("/explanatory/manual/{id}")
+    ResponseEntity<ApiResponse<ExplanatoryQuiz>> createManualExplanatoryQuiz(@RequestBody ExplanatoryQuizDto explanatoryQuizDto, @PathVariable Long id, @RequestHeader("Authorization") String token){
+        String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
+        if (!teacherService.teacherHasLesson(id,email)){
+            throw  new ResourceNotFoundException("you don't have the permission to add this quizz");
+        }
+
+        ExplanatoryQuiz explanatoryQuiz = quizService.createExplanatoryQuizManually(id,explanatoryQuizDto.getQuestions());
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been created",explanatoryQuiz));
 
     }
 
     @PutMapping("/TrueFalse/modify/{id}")
-    ResponseEntity<ApiResponse<List<TrueFalseResponse>>> modifyTrueFalseQuiz(@PathVariable Long id,@RequestBody QuizInstructions quizInstructions,@RequestHeader("Authorization") String token){
+    ResponseEntity<ApiResponse<TrueFalseQuiz>> modifyTrueFalseQuiz(@PathVariable Long id,@RequestBody QuizInstructions quizInstructions,@RequestHeader("Authorization") String token){
         String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
         if (!teacherService.teacherHasQuiz(id,email)){
             throw  new ResourceNotFoundException("you don't have the permission to modify this quizz");
         }
 
-        List<TrueFalseResponse> trueFalseResponses = quizService.modifyTrueFalseQuiz(id,quizInstructions);
-        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been updated",trueFalseResponses));
+        TrueFalseQuiz trueFalseQuiz = quizService.modifyTrueFalseQuiz(id,quizInstructions);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been updated",trueFalseQuiz));
 
     }
 
     @PutMapping("/explanatory/modify/{id}")
-    ResponseEntity<ApiResponse<List<ExplanatoryResponse>>> modifyexplanatoryQuiz(@PathVariable Long id,@RequestBody QuizInstructions quizInstructions,@RequestHeader("Authorization") String token){
+    ResponseEntity<ApiResponse<ExplanatoryQuiz>> modifyExplanatoryQuiz(@PathVariable Long id,@RequestBody QuizInstructions quizInstructions,@RequestHeader("Authorization") String token){
         String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
         if (!teacherService.teacherHasQuiz(id,email)){
             throw  new ResourceNotFoundException("you don't have the permission to modify this quizz");
         }
 
-        List<ExplanatoryResponse> explanatoryResponses = quizService.modifyExplanatoryQuiz(id,quizInstructions);
-        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been updated",explanatoryResponses));
+        ExplanatoryQuiz explanatoryQuiz = quizService.modifyExplanatoryQuiz(id,quizInstructions);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been updated",explanatoryQuiz));
 
     }
 
 
     @PutMapping("/multipleChoice/modify/{id}")
-    ResponseEntity<ApiResponse<List<MultipleChoiceResponse>>> modifyMultipleQuiz(@PathVariable Long id,@RequestBody QuizInstructions quizInstructions,@RequestHeader("Authorization") String token){
+    ResponseEntity<ApiResponse<MultipleChoiceQuiz>> modifyMultipleQuiz(@PathVariable Long id,@RequestBody QuizInstructions quizInstructions,@RequestHeader("Authorization") String token){
         String email = authService.getUserDetailsFromAuthService(authUrl,token).getEmail();
         if (!teacherService.teacherHasQuiz(id,email)){
             throw  new ResourceNotFoundException("you don't have the permission to modify this quizz");
         }
 
-        List<MultipleChoiceResponse> multipleChoiceResponses = quizService.modifyMultipleChoiceQuiz(id,quizInstructions);
-        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been updated",multipleChoiceResponses));
+        MultipleChoiceQuiz multipleChoiceQuiz = quizService.modifyMultipleChoiceQuiz(id,quizInstructions);
+        return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been updated",multipleChoiceQuiz));
 
     }
 
@@ -123,8 +162,5 @@ public class QuizController {
         quizService.deleteQuiz(id);
         return ResponseEntity.ok(new ApiResponse<>(Boolean.TRUE,"quiz has been deleted",null));
     }
-
-
-
 
 }

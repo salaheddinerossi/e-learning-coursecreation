@@ -7,6 +7,8 @@ import java.util.List;
 @Data
 public class MultipleChoiceResponse {
 
+    private Long id;
+
     private String prompt;
 
     private List<String> options;

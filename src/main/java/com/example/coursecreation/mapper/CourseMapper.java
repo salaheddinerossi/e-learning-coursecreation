@@ -24,6 +24,7 @@ public interface CourseMapper {
     @Mapping(target = "skill", ignore = true)
     @Mapping(target = "courseStatusEnum", ignore = true)
     @Mapping(target = "date", ignore = true)
+    @Mapping(target = "image", ignore = true)
     Course toCourse(CourseDto dto);
 
 
@@ -34,6 +35,9 @@ public interface CourseMapper {
 
     CourseResponse toCourseResponse(Course course);
 
+    List<CourseResponse> toCourseResponse(List<Course> courses);
+
+    @Mapping(source = "course.category.id",target = "categoryId")
     @Mapping(target = "chapterCourseResponses", source = "chapters")
     @Mapping(target = "skillId",source = "course.skill.id")
     @Mapping(target = "skillName",source = "course.skill.name")
@@ -52,8 +56,4 @@ public interface CourseMapper {
     // Collection mappings for chapters and lessons
     List<ChapterCourseResponse> toChapterCourseResponseList(List<Chapter> chapters);
     List<LessonCourseResponse> toLessonCourseResponseList(List<Lesson> lessons);
-
-
-
-    void updateCourseFromDto(CourseDto dto, @MappingTarget Course course);
 }

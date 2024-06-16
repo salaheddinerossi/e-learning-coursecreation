@@ -6,20 +6,20 @@ import com.example.coursecreation.exception.*;
 import com.example.coursecreation.mapper.ChapterMapper;
 import com.example.coursecreation.mapper.CourseMapper;
 import com.example.coursecreation.model.*;
-import com.example.coursecreation.repository.CategoryRepository;
-import com.example.coursecreation.repository.CourseRepository;
-import com.example.coursecreation.repository.SkillRepository;
-import com.example.coursecreation.repository.TeacherRepository;
+import com.example.coursecreation.repository.*;
+import com.example.coursecreation.response.CategoryCoursesResponse;
 import com.example.coursecreation.response.CourseCreatedResponse;
 import com.example.coursecreation.response.CourseDetailsResponse;
 import com.example.coursecreation.response.CourseResponse;
 import com.example.coursecreation.service.CourseService;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -33,23 +33,38 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
 
     final
+    StorageService storageService;
+
+    final
+    ChapterRepository chapterRepository;
+
+    final
     ChapterMapper chapterMapper;
 
     @Autowired
     public CourseServiceImpl(TeacherRepository teacherRepository, CourseRepository courseRepository,
                              CategoryRepository categoryRepository, SkillRepository skillRepository,
-                             CourseMapper courseMapper, ChapterMapper chapterMapper) {
+                             CourseMapper courseMapper, ChapterMapper chapterMapper, ChapterRepository chapterRepository, StorageService storageService) {
         this.teacherRepository = teacherRepository;
         this.courseRepository = courseRepository;
         this.categoryRepository = categoryRepository;
         this.skillRepository = skillRepository;
         this.courseMapper = courseMapper;
         this.chapterMapper = chapterMapper;
+        this.chapterRepository = chapterRepository;
+        this.storageService = storageService;
     }
 
     @Override
-    public CourseCreatedResponse createCourse(CourseDto courseDto, String email) {
+    public CourseCreatedResponse createCourse(CourseDto courseDto, String email) throws IOException {
         Course course = courseMapper.toCourse(courseDto);
+
+        String fileName = generateUniqueFileName(Objects.requireNonNull(courseDto.getImage().getOriginalFilename()));
+        String presignedUrl = storageService.generatePresignedUrl(fileName);
+        storageService.uploadFileToS3(courseDto.getImage(), presignedUrl);
+
+        course.setImage(storageService.getFileUrl(fileName).toString());
+
 
         Teacher teacher = findTeacherByEmail(email);
 
@@ -65,15 +80,23 @@ public class CourseServiceImpl implements CourseService {
         course.setCourseStatusEnum(CourseStatus.DRAFT);
         course.setDate(LocalDate.now());
 
+
+
         return courseMapper.toCourseCreatedResponse(courseRepository.save(course));
     }
 
     @Override
-    public CourseCreatedResponse modifyCourse(Long id, CourseDto courseDto) {
+    public CourseCreatedResponse modifyCourse(Long id, CourseDto courseDto) throws IOException {
 
         Course course = findCourseById(id);
         course.setAbout(courseDto.getAbout());
         course.setCourseLevelEnum(courseDto.getCourseLevelEnum());
+
+        String fileName = generateUniqueFileName(Objects.requireNonNull(courseDto.getImage().getOriginalFilename()));
+        String presignedUrl = storageService.generatePresignedUrl(fileName);
+        storageService.uploadFileToS3(courseDto.getImage(), presignedUrl);
+
+        course.setImage(storageService.getFileUrl(fileName).toString());
 
         Category category = findCategoryById(courseDto.getCategoryId());
 
@@ -81,7 +104,6 @@ public class CourseServiceImpl implements CourseService {
         course.setCategory(category);
 
         course.setTitle(courseDto.getTitle());
-        course.setImage(courseDto.getImage());
         course.setRequirements(courseDto.getRequirements());
 
         return courseMapper.toCourseCreatedResponse(courseRepository.save(course));
@@ -89,12 +111,12 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public CourseDetailsResponse getCourseDetails(Long id) {
-
-
+    public CourseDetailsResponse getCourseDetails(Long id,Boolean isTeacher){
 
         Course course = findCourseById(id);
-        if (course.getCourseStatusEnum()!=CourseStatus.APPROVED){
+
+
+        if (course.getCourseStatusEnum()!=CourseStatus.APPROVED && !isTeacher){
             throw new ResourceNotFoundException("this course is not approved yet ");
         }
 
@@ -108,12 +130,23 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public List<CourseResponse> getCoursesByCategory(Long categoryId) {
-        List<Course> courses = courseRepository.findCoursesByCategoryId(categoryId);
-        return courses.stream()
+    public CategoryCoursesResponse getCoursesByCategory(Long categoryId) {
+
+        Category category = findCategoryById(categoryId);
+
+        List<Course> courses = courseRepository.findCourseByCategory(category);
+        List<CourseResponse> courseResponses =  courses.stream()
                 .filter(course -> course.getCourseStatusEnum() == CourseStatus.APPROVED)
                 .map(courseMapper::toCourseResponse)
                 .collect(Collectors.toList());
+
+        CategoryCoursesResponse categoryCoursesResponse = new CategoryCoursesResponse();
+        categoryCoursesResponse.setCourseResponses(courseResponses);
+        categoryCoursesResponse.setId(categoryId);
+        categoryCoursesResponse.setDescription(category.getDescription());
+        categoryCoursesResponse.setTitle(category.getTitle());
+        return categoryCoursesResponse;
+
     }
 
     @Override
@@ -123,6 +156,14 @@ public class CourseServiceImpl implements CourseService {
                 .filter(course -> course.getCourseStatusEnum() == CourseStatus.PUBLISHED)
                 .map(courseMapper::toCourseResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CourseResponse> getTeacherCourses(String email) {
+
+        List<Course> courses = courseRepository.findByTeacherEmail(email);
+
+        return courseMapper.toCourseResponse(courses);
     }
 
     @Override
@@ -146,6 +187,13 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public CourseCreatedResponse getCourseFromTeacher(Long courseId) {
         return courseMapper.toCourseCreatedResponse(findCourseById(courseId));
+    }
+
+    @Override
+    public Long getCourseIdFromChapterId(Long chapterId) {
+
+
+        return findChapterById(chapterId).getCourse().getId();
     }
 
 
@@ -176,6 +224,12 @@ public class CourseServiceImpl implements CourseService {
         );
     }
 
+    private Chapter findChapterById(Long id){
+        return chapterRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("chapter not found with the id:"+ id)
+        );
+    }
+
 
     private Course findCourseById(Long id){
         return courseRepository.findById(id).orElseThrow(
@@ -184,7 +238,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     private void categoryCanContainsCourse(Category category){
-        if (!category.getContainsCategories()){
+        if (category.getContainsCategories()){
             throw new BadRequestException("this category cannot contains any course");
         }
     }
@@ -193,13 +247,39 @@ public class CourseServiceImpl implements CourseService {
         originalChapters.stream()
                 .filter(chapter -> !Boolean.TRUE.equals(chapter.getIsDeleted()))
                 .forEach(chapter -> {
+                    // Filter out lessons marked as deleted
                     List<Lesson> filteredLessons = filterOutDeletedLessons(chapter.getLessons());
                     chapter.getLessons().clear();
                     chapter.getLessons().addAll(filteredLessons);
+
+                    // If the chapter can contain sub-chapters, recursively handle sub-chapters
+                    if (Boolean.TRUE.equals(chapter.getContainsChapters())) {
+                        List<Chapter> filteredSubChapters = filterOutDeletedSubChapters(chapter.getChildChapters());
+                        chapter.getChildChapters().clear();
+                        chapter.getChildChapters().addAll(filteredSubChapters);
+                    }
                 });
 
+        // Return only top-level chapters (with no parent) that are not marked as deleted
         return originalChapters.stream()
-                .filter(chapter -> !Boolean.TRUE.equals(chapter.getIsDeleted()))
+                .filter(chapter -> !Boolean.TRUE.equals(chapter.getIsDeleted()) && chapter.getParentChapter() == null)
+                .collect(Collectors.toList());
+    }
+
+    private List<Chapter> filterOutDeletedSubChapters(List<Chapter> originalSubChapters) {
+        return originalSubChapters.stream()
+                .filter(subChapter -> !Boolean.TRUE.equals(subChapter.getIsDeleted()))
+                .map(subChapter -> {
+                    // Filter out lessons in sub-chapters marked as deleted
+                    subChapter.setLessons(filterOutDeletedLessons(subChapter.getLessons()));
+
+                    // Recursively filter sub-sub-chapters
+                    if (Boolean.TRUE.equals(subChapter.getContainsChapters())) {
+                        subChapter.setChildChapters(filterOutDeletedSubChapters(subChapter.getChildChapters()));
+                    }
+
+                    return subChapter;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -208,6 +288,16 @@ public class CourseServiceImpl implements CourseService {
                 .filter(lesson -> !Boolean.TRUE.equals(lesson.getIsDeleted()))
                 .collect(Collectors.toList());
     }
+
+    private String generateUniqueFileName(String originalFileName) {
+        String extension = "";
+        int i = originalFileName.lastIndexOf('.');
+        if (i > 0) {
+            extension = originalFileName.substring(i);
+        }
+        return UUID.randomUUID().toString() + extension;
+    }
+
 
 
 }

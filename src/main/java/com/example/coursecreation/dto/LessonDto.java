@@ -2,6 +2,7 @@ package com.example.coursecreation.dto;
 
 
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class LessonDto {
@@ -10,11 +11,10 @@ public class LessonDto {
 
     private String description;
 
-    private String material;
+    private MultipartFile material;
 
     private Boolean usesAI;
 
     private Long chapterId;
-
 
 }

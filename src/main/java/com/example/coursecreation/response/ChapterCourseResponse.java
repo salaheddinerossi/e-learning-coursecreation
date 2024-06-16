@@ -11,6 +11,8 @@ public class ChapterCourseResponse {
 
     private Long id;
 
+    private String title;
+
     private Boolean containsChapters;
 
     private List<ChapterCourseResponse> childChapters;

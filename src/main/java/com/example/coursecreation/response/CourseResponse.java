@@ -13,4 +13,6 @@ public class CourseResponse {
 
     private String about;
 
+    private String courseStatusEnum;
+
 }

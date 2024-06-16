@@ -20,6 +20,8 @@ public class LessonDetails {
 
     private String summary;
 
+    private List<String> advices;
+
     private List<QuizNoAnswerResponse> quizNoAnswerResponses;
 
 }

@@ -23,8 +23,13 @@ public class Course {
 
     private String title;
 
+    @Lob
+    @Column(name="about", length=100000)
     private String about;
 
+
+    @Lob
+    @Column(name="requirements", length=100000)
     private String requirements;
 
     private Language languageEnum;
