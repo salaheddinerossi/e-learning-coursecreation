@@ -20,7 +20,7 @@ FROM openjdk:19-ea-11-jdk-oracle
 WORKDIR /app
 
 # Copy the JAR file from the build stage into the final image
-COPY --from=build /app/target/AuthService-0.0.1-SNAPSHOT.jar /app/app.jar
+COPY --from=build /app/target/CourseCreation-0.0.1-SNAPSHOT.jar /app/app.jar
 
 # Expose the port the app runs on
 EXPOSE 8082
