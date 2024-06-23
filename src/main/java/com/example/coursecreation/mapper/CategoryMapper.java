@@ -21,7 +21,6 @@ public interface CategoryMapper {
     Category toCategory(CategoryDto dto);
 
 
-
     CategoryResponse toCategoryResponse(Category category);
 
 
